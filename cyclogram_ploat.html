@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Gait Cyclogram Analyzer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .control-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin: 20px 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .data-info {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        .parameter-group {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        .area-controls {
+            background: #e8f5e8;
+            border-left-color: #28a745;
+        }
+        .area-info {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏃‍♂️ Enhanced Gait Cyclogram Analyzer</h1>
+            <p>Biomechanical analysis with Joint Angles, ZMP & COM</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Activity Type:</label>
+                <select id="activitySelect">
+                    <option value="walking">🚶 Walking</option>
+                    <option value="cycling">🚴 Cycling</option>
+                    <option value="stair">🪜 Stair Climbing</option>
+                    <option value="treadmill">🏃 Treadmill</option>
+                    <option value="jumping">🦘 Jumping</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>X-Axis Parameter:</label>
+                <select id="xAxisSelect">
+                    <optgroup label="Joint Angles">
+                        <option value="L_Hip_Angle">Left Hip Angle</option>
+                        <option value="R_Hip_Angle">Right Hip Angle</option>
+                        <option value="L_Knee_Angle">Left Knee Angle</option>
+                        <option value="R_Knee_Angle">Right Knee Angle</option>
+                        <option value="L_Foot_Angle">Left Foot Angle</option>
+                        <option value="R_Foot_Angle">Right Foot Angle</option>
+                    </optgroup>
+                    <optgroup label="Center of Mass">
+                        <option value="COM_X">COM X-Position</option>
+                        <option value="COM_Y">COM Y-Position</option>
+                        <option value="COM_Z">COM Z-Position</option>
+                        <option value="COM_Velocity_X">COM Velocity X</option>
+                        <option value="COM_Velocity_Y">COM Velocity Y</option>
+                        <option value="COM_Acceleration_X">COM Acceleration X</option>
+                    </optgroup>
+                    <optgroup label="Zero Moment Point">
+                        <option value="ZMP_X">ZMP X-Position</option>
+                        <option value="ZMP_Y">ZMP Y-Position</option>
+                        <option value="ZMP_Moment">ZMP Moment</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Y-Axis Parameter:</label>
+                <select id="yAxisSelect">
+                    <optgroup label="Joint Angles">
+                        <option value="L_Knee_Angle">Left Knee Angle</option>
+                        <option value="R_Knee_Angle">Right Knee Angle</option>
+                        <option value="L_Hip_Angle">Left Hip Angle</option>
+                        <option value="R_Hip_Angle">Right Hip Angle</option>
+                        <option value="L_Foot_Angle">Left Foot Angle</option>
+                        <option value="R_Foot_Angle">Right Foot Angle</option>
+                    </optgroup>
+                    <optgroup label="Center of Mass">
+                        <option value="COM_X">COM X-Position</option>
+                        <option value="COM_Y">COM Y-Position</option>
+                        <option value="COM_Z">COM Z-Position</option>
+                        <option value="COM_Velocity_X">COM Velocity X</option>
+                        <option value="COM_Velocity_Y">COM Velocity Y</option>
+                        <option value="COM_Acceleration_X">COM Acceleration X</option>
+                    </optgroup>
+                    <optgroup label="Zero Moment Point">
+                        <option value="ZMP_X">ZMP X-Position</option>
+                        <option value="ZMP_Y">ZMP Y-Position</option>
+                        <option value="ZMP_Moment">ZMP Moment</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Subject:</label>
+                <select id="subjectSelect">
+                    <option value="all">All Subjects</option>
+                    <option value="Abesh">Abesh</option>
+                    <option value="Adarsh">Adarsh</option>
+                    <option value="Utkarsh">Utkarsh</option>
+                </select>
+            </div>
+
+            <div class="control-group area-controls">
+                <label>Show Areas:</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; font-weight: normal;">
+                        <input type="checkbox" id="showZmpArea" checked style="width: auto; margin-right: 5px;">
+                        ZMP Area
+                    </label>
+                    <label style="display: flex; align-items: center; font-weight: normal;">
+                        <input type="checkbox" id="showComArea" checked style="width: auto; margin-right: 5px;">
+                        COM Area
+                    </label>
+                    <label style="display: flex; align-items: center; font-weight: normal;">
+                        <input type="checkbox" id="showStabilityZone" style="width: auto; margin-right: 5px;">
+                        Stability Zone
+                    </label>
+                </div>
+                <div class="area-info">
+                    Areas show movement boundaries and stability zones
+                </div>
+            </div>
+
+            <div class="control-group">
+                <button onclick="updatePlot()">🔄 Update Plot</button>
+                <button onclick="exportData()">💾 Export Data</button>
+                <button onclick="toggleAreas()">🎯 Toggle Areas</button>
+                <div class="data-info" id="dataInfo">
+                    Loading demo data...
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="cyclogramChart"></canvas>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>📊 Data Summary</h3>
+                <div id="dataSummary">
+                    <p><strong>Activity:</strong> <span id="currentActivity">Walking</span></p>
+                    <p><strong>Total Points:</strong> <span id="totalPoints">0</span></p>
+                    <p><strong>Stance Phase:</strong> <span id="stancePoints">0</span></p>
+                    <p><strong>Swing Phase:</strong> <span id="swingPoints">0</span></p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>👥 Subject Information</h3>
+                <div id="subjectInfo">
+                    <p><strong>Subjects:</strong> Abesh, Adarsh, Utkarsh</p>
+                    <p><strong>Age Range:</strong> 21-23 years</p>
+                    <p><strong>Gender:</strong> Male</p>
+                    <p><strong>Height:</strong> 165-175 cm</p>
+                    <p><strong>Weight:</strong> 60-75 kg</p>
+                </div>
+            </div>
+
+            <div class="stat-card parameter-group">
+                <h3>🎯 ZMP & COM Areas</h3>
+                <div>
+                    <p><strong>ZMP Area:</strong> <span style="color: #ffc107;">█</span> Ground reaction boundaries</p>
+                    <p><strong>COM Area:</strong> <span style="color: #dc3545;">█</span> Body mass trajectory zone</p>
+                    <p><strong>Stability Zone:</strong> <span style="color: #28a745;">▬</span> Safe movement area</p>
+                    <p><strong>Area Coverage:</strong> <span id="areaCoverage">Calculating...</span></p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>📋 Analysis Legend</h3>
+                <div>
+                    <p>• <span style="color: #3B82F6;">●</span> Stance Phase: Weight bearing</p>
+                    <p>• <span style="color: #10B981;">●</span> Swing Phase: Limb advancement</p>
+                    <p>• <strong>ZMP:</strong> Ground reaction force center</p>
+                    <p>• <strong>COM:</strong> Body center of mass trajectory</p>
+                    <p>• <strong>Areas:</strong> Movement boundaries & zones</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let cyclogramChart;
+        let gaitData = [];
+        
+        // Activity configurations with ZMP and COM parameters
+        const activities = {
+            walking: { 
+                cycles: 100, 
+                base: { hip: 0, knee: 0, ankle: 0 },
+                com: { height: 100, velocity: 1.0 },
+                zmp: { range: 15, stability: 0.8 }
+            },
+            cycling: { 
+                cycles: 120, 
+                base: { hip: 45, knee: 30, ankle: 15 },
+                com: { height: 95, velocity: 0.3 },
+                zmp: { range: 8, stability: 0.9 }
+            },
+            stair: { 
+                cycles: 80, 
+                base: { hip: 10, knee: 20, ankle: 5 },
+                com: { height: 98, velocity: 0.6 },
+                zmp: { range: 20, stability: 0.7 }
+            },
+            treadmill: { 
+                cycles: 110, 
+                base: { hip: 5, knee: 10, ankle: 0 },
+                com: { height: 101, velocity: 1.2 },
+                zmp: { range: 12, stability: 0.85 }
+            },
+            jumping: { 
+                cycles: 60, 
+                base: { hip: 20, knee: 40, ankle: 10 },
+                com: { height: 95, velocity: 2.0 },
+                zmp: { range: 25, stability: 0.6 }
+            }
+        };
+
+        // Parameter units mapping
+        const parameterUnits = {
+            'L_Hip_Angle': 'degrees', 'R_Hip_Angle': 'degrees',
+            'L_Knee_Angle': 'degrees', 'R_Knee_Angle': 'degrees',
+            'L_Foot_Angle': 'degrees', 'R_Foot_Angle': 'degrees',
+            'COM_X': 'cm', 'COM_Y': 'cm', 'COM_Z': 'cm',
+            'COM_Velocity_X': 'm/s', 'COM_Velocity_Y': 'm/s',
+            'COM_Acceleration_X': 'm/s²',
+            'ZMP_X': 'cm', 'ZMP_Y': 'cm', 'ZMP_Moment': 'N·m'
+        };
+
+        // Generate demo data with ZMP and COM
+        function generateDemoData(activityType) {
+            const data = [];
+            const subjects = ['Abesh', 'Adarsh', 'Utkarsh'];
+            const activityData = activities[activityType];
+            
+            subjects.forEach((subject, subjectIndex) => {
+                const subjectWeight = 65 + subjectIndex * 5; // kg
+                const subjectHeight = 170 + subjectIndex * 3; // cm
+                
+                for (let i = 0; i < activityData.cycles; i++) {
+                    const cycle = i / activityData.cycles * 100;
+                    const phase = cycle < 60 ? 'Stance' : 'Swing';
+                    const timeInCycle = cycle / 100;
+                    
+                    // Joint angles (existing)
+                    const hipAngle = activityData.base.hip + 
+                        Math.sin(cycle * Math.PI / 50) * (30 + subjectIndex * 5) +
+                        Math.random() * 5 - 2.5;
+                        
+                    const kneeAngle = activityData.base.knee + 
+                        Math.sin(cycle * Math.PI / 50 + Math.PI/4) * (40 + subjectIndex * 3) +
+                        Math.random() * 4 - 2;
+                        
+                    const ankleAngle = activityData.base.ankle + 
+                        Math.sin(cycle * Math.PI / 50 - Math.PI/3) * (20 + subjectIndex * 2) +
+                        Math.random() * 3 - 1.5;
+                    
+                    // Center of Mass calculations
+                    const comBaseHeight = activityData.com.height;
+                    const comX = Math.sin(cycle * Math.PI / 100) * 5 + subjectIndex * 2;
+                    const comY = comBaseHeight + Math.sin(cycle * Math.PI / 50) * 3;
+                    const comZ = Math.cos(cycle * Math.PI / 100) * 2;
+                    
+                    const comVelX = activityData.com.velocity * Math.cos(cycle * Math.PI / 100) + 
+                                   (Math.random() - 0.5) * 0.2;
+                    const comVelY = Math.sin(cycle * Math.PI / 25) * 0.3 + (Math.random() - 0.5) * 0.1;
+                    const comAccX = Math.sin(cycle * Math.PI / 50) * 2 + (Math.random() - 0.5) * 0.5;
+                    
+                    // Zero Moment Point calculations
+                    const zmpX = Math.sin(cycle * Math.PI / 50 + Math.PI/6) * activityData.zmp.range + 
+                                subjectIndex * 1.5 + (Math.random() - 0.5) * 2;
+                    const zmpY = phase === 'Stance' ? 
+                                Math.cos(cycle * Math.PI / 100) * 3 + (Math.random() - 0.5) * 1 :
+                                (Math.random() - 0.5) * 0.5;
+                    const zmpMoment = subjectWeight * 9.81 * zmpX / 100 + // Convert cm to m
+                                     Math.sin(cycle * Math.PI / 25) * 20;
+                    
+                    data.push({
+                        Subject: subject,
+                        Activity: activityType,
+                        Cycle: cycle,
+                        Phase: phase,
+                        Time: i * 0.02,
+                        Weight: subjectWeight,
+                        Height: subjectHeight,
+                        
+                        // Joint angles
+                        L_Hip_Angle: hipAngle,
+                        R_Hip_Angle: hipAngle + Math.random() * 2 - 1,
+                        L_Knee_Angle: kneeAngle,
+                        R_Knee_Angle: kneeAngle + Math.random() * 2 - 1,
+                        L_Foot_Angle: ankleAngle,
+                        R_Foot_Angle: ankleAngle + Math.random() * 2 - 1,
+                        
+                        // Center of Mass
+                        COM_X: comX,
+                        COM_Y: comY,
+                        COM_Z: comZ,
+                        COM_Velocity_X: comVelX,
+                        COM_Velocity_Y: comVelY,
+                        COM_Acceleration_X: comAccX,
+                        
+                        // Zero Moment Point
+                        ZMP_X: zmpX,
+                        ZMP_Y: zmpY,
+                        ZMP_Moment: zmpMoment
+                    });
+                }
+            });
+            
+            return data;
+        }
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('cyclogramChart').getContext('2d');
+            
+            cyclogramChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Stance Phase',
+                        data: [],
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }, {
+                        label: 'Swing Phase',
+                        data: [],
+                        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }, {
+                        label: 'ZMP Area',
+                        data: [],
+                        backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                        borderColor: 'rgba(255, 193, 7, 0.8)',
+                        borderWidth: 2,
+                        fill: true,
+                        showLine: true,
+                        pointRadius: 0,
+                        order: 3
+                    }, {
+                        label: 'COM Area',
+                        data: [],
+                        backgroundColor: 'rgba(220, 53, 69, 0.15)',
+                        borderColor: 'rgba(220, 53, 69, 0.6)',
+                        borderWidth: 2,
+                        fill: true,
+                        showLine: true,
+                        pointRadius: 0,
+                        order: 2
+                    }, {
+                        label: 'Stability Zone',
+                        data: [],
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        borderColor: 'rgba(40, 167, 69, 0.4)',
+                        borderWidth: 1,
+                        borderDash: [5, 5],
+                        fill: true,
+                        showLine: true,
+                        pointRadius: 0,
+                        order: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Hip Angle (degrees)'
+                            },
+                            grid: {
+                                display: true,
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Knee Angle (degrees)'
+                            },
+                            grid: {
+                                display: true,
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const point = context.raw;
+                                    return [
+                                        `X: ${point.x.toFixed(1)}${point.xUnit || ''}`,
+                                        `Y: ${point.y.toFixed(1)}${point.yUnit || ''}`,
+                                        `Subject: ${point.subject || 'Unknown'}`,
+                                        `Phase: ${point.phase || 'Unknown'}`,
+                                        `Cycle: ${point.cycle ? point.cycle.toFixed(1) + '%' : 'N/A'}`
+                                    ];
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Calculate area boundaries for ZMP and COM
+        function calculateAreaBoundaries(data, xParam, yParam) {
+            const areas = {
+                zmp: [],
+                com: [],
+                stability: []
+            };
+            
+            // Check if we're plotting ZMP or COM parameters
+            const isZmpX = xParam.includes('ZMP');
+            const isZmpY = yParam.includes('ZMP');
+            const isComX = xParam.includes('COM');
+            const isComY = yParam.includes('COM');
+            
+            if (isZmpX || isZmpY) {
+                // Create ZMP area boundary
+                const zmpData = data.filter(d => d.ZMP_X !== undefined && d.ZMP_Y !== undefined);
+                if (zmpData.length > 0) {
+                    const xValues = zmpData.map(d => d[xParam]);
+                    const yValues = zmpData.map(d => d[yParam]);
+                    
+                    const xMin = Math.min(...xValues) - 2;
+                    const xMax = Math.max(...xValues) + 2;
+                    const yMin = Math.min(...yValues) - 2;
+                    const yMax = Math.max(...yValues) + 2;
+                    
+                    areas.zmp = [
+                        {x: xMin, y: yMin}, {x: xMax, y: yMin},
+                        {x: xMax, y: yMax}, {x: xMin, y: yMax},
+                        {x: xMin, y: yMin}
+                    ];
+                }
+            }
+            
+            if (isComX || isComY) {
+                // Create COM area boundary
+                const comData = data.filter(d => d.COM_X !== undefined && d.COM_Y !== undefined);
+                if (comData.length > 0) {
+                    const xValues = comData.map(d => d[xParam]);
+                    const yValues = comData.map(d => d[yParam]);
+                    
+                    const xMean = xValues.reduce((a, b) => a + b, 0) / xValues.length;
+                    const yMean = yValues.reduce((a, b) => a + b, 0) / yValues.length;
+                    const xStd = Math.sqrt(xValues.reduce((sq, n) => sq + Math.pow(n - xMean, 2), 0) / xValues.length);
+                    const yStd = Math.sqrt(yValues.reduce((sq, n) => sq + Math.pow(n - yMean, 2), 0) / yValues.length);
+                    
+                    // Create elliptical boundary (2 standard deviations)
+                    const points = [];
+                    for (let i = 0; i <= 36; i++) {
+                        const angle = (i * 10) * Math.PI / 180;
+                        const x = xMean + 2 * xStd * Math.cos(angle);
+                        const y = yMean + 2 * yStd * Math.sin(angle);
+                        points.push({x, y});
+                    }
+                    areas.com = points;
+                }
+            }
+            
+            // Create stability zone (larger boundary)
+            if ((isZmpX || isZmpY || isComX || isComY) && data.length > 0) {
+                const xValues = data.map(d => d[xParam]);
+                const yValues = data.map(d => d[yParam]);
+                
+                const xMin = Math.min(...xValues) - 5;
+                const xMax = Math.max(...xValues) + 5;
+                const yMin = Math.min(...yValues) - 5;
+                const yMax = Math.max(...yValues) + 5;
+                
+                areas.stability = [
+                    {x: xMin, y: yMin}, {x: xMax, y: yMin},
+                    {x: xMax, y: yMax}, {x: xMin, y: yMax},
+                    {x: xMin, y: yMin}
+                ];
+            }
+            
+            return areas;
+        }
+
+        // Toggle area visibility
+        function toggleAreas() {
+            const zmpVisible = cyclogramChart.data.datasets[2].data.length > 0;
+            const comVisible = cyclogramChart.data.datasets[3].data.length > 0;
+            const stabilityVisible = cyclogramChart.data.datasets[4].data.length > 0;
+            
+            if (zmpVisible || comVisible || stabilityVisible) {
+                // Hide all areas
+                cyclogramChart.data.datasets[2].data = [];
+                cyclogramChart.data.datasets[3].data = [];
+                cyclogramChart.data.datasets[4].data = [];
+                document.getElementById('showZmpArea').checked = false;
+                document.getElementById('showComArea').checked = false;
+                document.getElementById('showStabilityZone').checked = false;
+            } else {
+                // Show areas
+                updatePlot();
+                document.getElementById('showZmpArea').checked = true;
+                document.getElementById('showComArea').checked = true;
+                document.getElementById('showStabilityZone').checked = true;
+            }
+            
+            cyclogramChart.update();
+        }
+        function getParameterDisplayName(param) {
+            const names = {
+                'L_Hip_Angle': 'Left Hip Angle',
+                'R_Hip_Angle': 'Right Hip Angle',
+                'L_Knee_Angle': 'Left Knee Angle',
+                'R_Knee_Angle': 'Right Knee Angle',
+                'L_Foot_Angle': 'Left Foot Angle',
+                'R_Foot_Angle': 'Right Foot Angle',
+                'COM_X': 'COM X-Position',
+                'COM_Y': 'COM Y-Position',
+                'COM_Z': 'COM Z-Position',
+                'COM_Velocity_X': 'COM Velocity X',
+                'COM_Velocity_Y': 'COM Velocity Y',
+                'COM_Acceleration_X': 'COM Acceleration X',
+                'ZMP_X': 'ZMP X-Position',
+                'ZMP_Y': 'ZMP Y-Position',
+                'ZMP_Moment': 'ZMP Moment'
+            };
+            return names[param] || param;
+        }
+
+        // Update plot with current selections
+        function updatePlot() {
+            const activity = document.getElementById('activitySelect').value;
+            const xParam = document.getElementById('xAxisSelect').value;
+            const yParam = document.getElementById('yAxisSelect').value;
+            const selectedSubject = document.getElementById('subjectSelect').value;
+            
+            // Generate new data
+            gaitData = generateDemoData(activity);
+            
+            // Filter by subject if not "all"
+            let filteredData = gaitData;
+            if (selectedSubject !== 'all') {
+                filteredData = gaitData.filter(d => d.Subject === selectedSubject);
+            }
+            
+            // Get units for parameters
+            const xUnit = parameterUnits[xParam] || '';
+            const yUnit = parameterUnits[yParam] || '';
+            
+            // Prepare data for chart
+            const stanceData = filteredData
+                .filter(d => d.Phase === 'Stance')
+                .map(d => ({
+                    x: d[xParam] || 0,
+                    y: d[yParam] || 0,
+                    subject: d.Subject,
+                    phase: d.Phase,
+                    cycle: d.Cycle,
+                    xUnit: xUnit ? ` ${xUnit}` : '',
+                    yUnit: yUnit ? ` ${yUnit}` : ''
+                }));
+                
+            const swingData = filteredData
+                .filter(d => d.Phase === 'Swing')
+                .map(d => ({
+                    x: d[xParam] || 0,
+                    y: d[yParam] || 0,
+                    subject: d.Subject,
+                    phase: d.Phase,
+                    cycle: d.Cycle,
+                    xUnit: xUnit ? ` ${xUnit}` : '',
+                    yUnit: yUnit ? ` ${yUnit}` : ''
+                }));
+            
+            // Update chart data
+            cyclogramChart.data.datasets[0].data = stanceData;
+            cyclogramChart.data.datasets[1].data = swingData;
+            
+            // Calculate and update area boundaries
+            const areas = calculateAreaBoundaries(filteredData, xParam, yParam);
+            
+            // Update areas based on checkboxes
+            const showZmp = document.getElementById('showZmpArea').checked;
+            const showCom = document.getElementById('showComArea').checked;
+            const showStability = document.getElementById('showStabilityZone').checked;
+            
+            cyclogramChart.data.datasets[2].data = showZmp ? areas.zmp : [];
+            cyclogramChart.data.datasets[3].data = showCom ? areas.com : [];
+            cyclogramChart.data.datasets[4].data = showStability ? areas.stability : [];
+            
+            // Update axis labels
+            const xLabel = `${getParameterDisplayName(xParam)}${xUnit ? ` (${xUnit})` : ''}`;
+            const yLabel = `${getParameterDisplayName(yParam)}${yUnit ? ` (${yUnit})` : ''}`;
+            
+            cyclogramChart.options.scales.x.title.text = xLabel;
+            cyclogramChart.options.scales.y.title.text = yLabel;
+            
+            cyclogramChart.update();
+            
+            // Update statistics
+            updateStatistics(filteredData, activity, areas);
+        }
+
+        // Update statistics display
+        function updateStatistics(data, activity, areas) {
+            const stanceCount = data.filter(d => d.Phase === 'Stance').length;
+            const swingCount = data.filter(d => d.Phase === 'Swing').length;
+            const activityData = activities[activity];
+            
+            document.getElementById('currentActivity').textContent = activity.charAt(0).toUpperCase() + activity.slice(1);
+            document.getElementById('totalPoints').textContent = data.length;
+            document.getElementById('stancePoints').textContent = stanceCount;
+            document.getElementById('swingPoints').textContent = swingCount;
+            document.getElementById('dataInfo').textContent = `${data.length} data points loaded`;
+            
+            // Update ZMP & COM specific stats
+            document.getElementById('zmpRange').textContent = `±${activityData.zmp.range} cm`;
+            document.getElementById('comHeight').textContent = `~${activityData.com.height} cm`;
+            document.getElementById('comVelocity').textContent = `${activityData.com.velocity.toFixed(1)} m/s`;
+            document.getElementById('stabilityMargin').textContent = 
+                activityData.zmp.stability > 0.8 ? 'Excellent' :
+                activityData.zmp.stability > 0.7 ? 'Good' : 'Moderate';
+            
+            // Calculate area coverage
+            let coverage = 'No areas shown';
+            if (areas) {
+                const hasZmp = areas.zmp.length > 0;
+                const hasCom = areas.com.length > 0;
+                const hasStability = areas.stability.length > 0;
+                
+                if (hasZmp && hasCom && hasStability) {
+                    coverage = 'Full coverage';
+                } else if (hasZmp || hasCom) {
+                    coverage = hasZmp && hasCom ? 'ZMP + COM' : hasZmp ? 'ZMP only' : 'COM only';
+                } else if (hasStability) {
+                    coverage = 'Stability zone';
+                }
+            }
+            
+            document.getElementById('areaCoverage').textContent = coverage;
+        }
+
+        // Export data as JSON
+        function exportData() {
+            const dataStr = JSON.stringify(gaitData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'enhanced_gait_cyclogram_data.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        document.getElementById('activitySelect').addEventListener('change', updatePlot);
+        document.getElementById('xAxisSelect').addEventListener('change', updatePlot);
+        document.getElementById('yAxisSelect').addEventListener('change', updatePlot);
+        document.getElementById('subjectSelect').addEventListener('change', updatePlot);
+        document.getElementById('showZmpArea').addEventListener('change', updatePlot);
+        document.getElementById('showComArea').addEventListener('change', updatePlot);
+        document.getElementById('showStabilityZone').addEventListener('change', updatePlot);
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            initChart();
+            updatePlot();
+        });
+    </script>
+</body>
+</html>
